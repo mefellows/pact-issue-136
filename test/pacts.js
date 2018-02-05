@@ -1,15 +1,14 @@
 const assert = require('assert');
 const path = require('path');
-const Pact = require('pact');
-const wrapper = require('@pact-foundation/pact-node');
+const Pact = require('@pact-foundation/pact').Pact;
 
 describe('Pact', function() {
-    let provider;
-
-    this.timeout(15000);
+    // this.timeout(15000);
 
     // Configure mock server
-    const mockServer = wrapper.createServer({
+    const provider = new Pact({
+        consumer: 'API View for NewApp', 
+        provider: 'Customer Products', 
         port: 9999,
         log: path.resolve(process.cwd(), 'logs', 'mockserver-integration.log'),
         dir: path.resolve(process.cwd(), 'pacts'),
@@ -30,8 +29,7 @@ describe('Pact', function() {
 
     before(function(done) {
         // Start mock server
-        mockServer.start().then(function() {
-            provider = Pact({consumer: 'API View for NewApp', provider: 'Customer Products', port: 9999});
+        provider.setup().then(function() {
             console.log('one');
             // Add interactions
             provider.addInteraction({
@@ -69,15 +67,13 @@ describe('Pact', function() {
       });
 
     // Verify service client works as expected
-    it('successfully receives all post', (done) => {
-        expect(true).to.eventually.eql(true).notify(done);
+    it('successfully receives all post', () => {
+        console.log('done!')
+        return provider.verify();
       });
 
     after(() => {
         // Write pact files
-        provider.finalize().then(() => {
-            wrapper.removeAllServers()
-
-          })
-      });
+        return provider.finalize()
+    });
   });
